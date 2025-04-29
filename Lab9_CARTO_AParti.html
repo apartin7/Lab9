@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Enhanced Bar Chart with D3.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.0/d3.min.js"></script>
+    <style>
+      .bar:hover {
+        opacity: 0.7;
+        cursor: pointer;
+      }
+
+      .tooltip {
+        position: absolute;
+        text-align: center;
+        padding: 5px;
+        font-size: 12px;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        border-radius: 5px;
+        pointer-events: none;
+        visibility: hidden;
+      }
+
+      .axis-label {
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .axis path,
+      .axis line {
+        shape-rendering: crispEdges;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chartContainer"></div>
+    <div class="tooltip" id="tooltip"></div>
+
+    <script type="text/javascript">
+      // Sample data for the bar chart
+      var data = [
+        { name: "A", value: 30 },
+        { name: "B", value: 80 },
+        { name: "C", value: 45 },
+        { name: "D", value: 60 },
+        { name: "E", value: 20 },
+        { name: "F", value: 90 },
+        { name: "G", value: 55 }
+      ];
+
+      // Set up the chart dimensions
+      var margin = { top: 20, right: 30, bottom: 40, left: 40 },
+          width = 500 - margin.left - margin.right,
+          height = 300 - margin.top - margin.bottom;
+
+      // Append SVG to the chart container
+      var svg = d3.select("#chartContainer")
+                  .append("svg")
+                  .attr("width", width + margin.left + margin.right)
+                  .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // Create scales for the x and y axes
+      var x = d3.scaleBand()
+                .domain(data.map(function(d) { return d.name; }))
+                .range([0, width])
+                .padding(0.1);
+
+      var y = d3.scaleLinear()
+                .domain([0, d3.max(data, function(d) { return d.value; })])
+                .nice()
+                .range([height, 0]);
+
+      // Add the x-axis to the chart
+      svg.append("g")
+         .selectAll(".x-axis")
+         .data(data)
+         .enter().append("text")
+         .attr("class", "x-axis")
+         .attr("x", function(d) { return x(d.name) + x.bandwidth() / 2; })
+         .attr("y", height + 30)
+         .attr("dy", "1.5em")
+         .style("text-anchor", "middle")
+         .text(function(d) { return d.name; })
+         .attr("class", "axis-label");
+
+      // Add the y-axis to the chart
+      svg.append("g")
+         .call(d3.axisLeft(y))
+         .append("text")
+         .attr("transform", "rotate(-90)")
+         .attr("y", 6)
+         .attr("dy", "0.71em")
+         .style("text-anchor", "end")
+         .attr("class", "axis-label")
+         .text("Value");
+
+      // Create bars for the chart
+      var bars = svg.selectAll(".bar")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr("class", "bar")
+                    .attr("x", function(d) { return x(d.name); })
+                    .attr("y", function(d) { return y(d.value); })
+                    .attr("width", x.bandwidth())
+                    .attr("height", function(d) { return height - y(d.value); })
+                    .attr("fill", function(d, i) { return d3.schemeCategory10[i % 10]; }) // Random colors
+                    .on("mouseover", function(event, d) {
+                      var tooltip = d3.select("#tooltip");
+                      tooltip.style("visibility", "visible")
+                             .html(d.name + ": " + d.value)
+                             .style("left", (event.pageX + 5) + "px")
+                             .style("top", (event.pageY - 30) + "px");
+                    })
+                    .on("mouseout", function() {
+                      d3.select("#tooltip").style("visibility", "hidden");
+                    });
+
+      // Add transition for the bars
+      bars.transition()
+          .duration(1000)
+          .ease(d3.easeBounceOut)
+          .attr("height", function(d) { return height - y(d.value); })
+          .attr("y", function(d) { return y(d.value); });
+
+    </script>
+  </body>
+</html>
